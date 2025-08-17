@@ -23,16 +23,7 @@ This project analyzes user reviews of the **TikTok mobile app** to uncover publi
 ## 📁 Project Files
 - `sentiment_analysis.ipynb` – the complete Python notebook
 - `tiktok_reviews.csv` – raw or cleaned review data
-- `wordclouds/` – positive and negative word clouds
-- `dashboard.pbix` – optional Power BI dashboard (if created)
-
-## 🖼️ Sample Visuals
-
-> Positive Review Word Cloud  
-![Positive Word Cloud](./wordclouds/positive.png)
-
-> Negative Review Word Cloud  
-![Negative Word Cloud](./wordclouds/negative.png)
+- `dashboard.pbix` – optional Power BI dashboard
 
 ## 📂 Dataset Source
 - Scraped from Google Play reviews using `google-play-scraper` or collected from [Kaggle](https://www.kaggle.com/)
