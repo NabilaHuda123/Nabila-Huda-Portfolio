@@ -1,1 +1,50 @@
+# ✅ Install required library
+!pip install --upgrade google-api-python-client
+
+# ✅ Import required libraries
+from googleapiclient.discovery import build
+import pandas as pd
+
+# 🔑 Paste your current API key here
+api_key = "AIzaSyDV79ARsBldTsIym5Bv2PjbdpYNMJ75VQg"
+
+# 🔗 Paste the YouTube video ID you want to scrape (example: ASEAN-related video)
+video_id = "9SBwX8O1GDU"  # ← Replace with your video ID
+
+# 🔧 Build YouTube service
+youtube = build('youtube', 'v3', developerKey=api_key)
+
+# 📥 Scrape comments
+comments = []
+nextPageToken = None
+
+while len(comments) < 1000:
+    request = youtube.commentThreads().list(
+        part='snippet',
+        videoId=video_id,
+        maxResults=100,
+        pageToken=nextPageToken,
+        textFormat='plainText'
+    )
+    response = request.execute()
+
+    for item in response['items']:
+        comment = item['snippet']['topLevelComment']['snippet']
+        comments.append([
+            comment['authorDisplayName'],
+            comment['publishedAt'],
+            comment['textDisplay']
+        ])
+        if len(comments) >= 1000:
+            break
+
+    nextPageToken = response.get('nextPageToken')
+    if not nextPageToken:
+        break
+
+# 💾 Save to CSV
+df = pd.DataFrame(comments, columns=['Author', 'Date', 'Comment'])
+df.to_csv("youtube_comments.csv", index=False)
+print(f"✅ Done! Scraped {len(df)} comments.")
+
 
