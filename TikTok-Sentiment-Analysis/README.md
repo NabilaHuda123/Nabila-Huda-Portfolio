@@ -26,7 +26,7 @@ This project analyzes user reviews of the **TikTok mobile app** to uncover publi
 
 ## 📂 Dataset Source
 - Scraped from Google Play reviews using `google-play-scraper` or collected from [Kaggle](https://www.kaggle.com/)
-- 
+  
 ## 📊 Dashboard Download
 
 Download the Power BI dashboard here:  
