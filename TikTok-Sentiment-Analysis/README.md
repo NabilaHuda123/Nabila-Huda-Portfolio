@@ -21,9 +21,8 @@ This project analyzes user reviews of the **TikTok mobile app** to uncover publi
 - "Addictive", "fun", and "easy" were among the top recurring positive keywords.
 
 ## 📁 Project Files
-- `sentiment_analysis.ipynb` – the complete Python notebook
 - `tiktok_reviews.csv` – raw or cleaned review data
-- `dashboard.pbix` – optional Power BI dashboard
+- `dashboard.pbix` –Power BI dashboard
 
 ## 📂 Dataset Source
 - Scraped from Google Play reviews using `google-play-scraper` or collected from [Kaggle](https://www.kaggle.com/)
