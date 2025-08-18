@@ -23,9 +23,3 @@ This project analyzes reviews of the ASEAN Road Closure 2025 to uncover public s
 - Scraped from Tiktok and Youtube using Python and other extension such as Tapicker, Apify and YoutubAPI
 - Raw dataset : Raw_Dataset_from_Tiktok_and_Youtube_Comment_using_apify,_tapicker.csv
    
-
-
----
-
-👩‍💻 This project demonstrates my ability to apply NLP and visualization to real-world user feedback. Feedback and suggestions are welcome!
-
