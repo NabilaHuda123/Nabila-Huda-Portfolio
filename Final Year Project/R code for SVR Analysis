@@ -1,0 +1,177 @@
+## Load the necessary libraries
+library(e1071)  # For SVR
+library(caret)  # For data splitting and handling
+library(ggplot2)
+library(lattice)
+
+# Step 1: Load the data
+mydata <- read.csv("SVR_DATA_REAL.csv")
+
+# Standardize the relevant variables (GDP, Population Density, and Electricity)
+variables <- c("GDP", "Population Density", "Electricity")
+
+scaled_mydata <- scale(mydata[, variables])
+
+# Check the first few rows of the scaled data
+head(scaled_mydata)
+---------------------------------------------------------------------------------------------------------------
+# THERES ERROR IN Error in `[.data.frame`(mydata, , variables) : undefined columns selected #
+#BELOW IS THE CODE TO TRY TO FIX THE ERROR #
+
+colnames(mydata)
+variables <- c("GDP", "Population.Density", "Electricity")
+colnames(mydata) <- trimws(colnames(mydata))  # Remove any leading/trailing spaces from column names
+
+# Standardize the relevant variables (GDP, Population Density, and Electricity)
+variables <- c("GDP", "Population.Density", "Electricity")  # Adjust column names if needed
+scaled_mydata <- scale(mydata[, variables])
+
+# Check the first few rows of the scaled data
+head(scaled_mydata)
+
+--------------------------------------------------------------------------------------------------------------
+#NOTE : ERROR fix
+# PROCEED TO NEXT STEP
+
+# Apply PCA on the scaled data
+pca_result <- prcomp(scaled_mydata, center = TRUE, scale. = TRUE)
+
+# View the summary of PCA to understand variance explained
+summary(pca_result)
+
+#Create the "Anthropogenic Factor"
+#The first principal component (PC1) will represent the combined influence of GDP, Population Density, and Electricity. We'll add this as a new column in the original dataset.
+
+# Extract the first principal component (PC1) as the Anthropogenic Factor
+mydata$Anthropogenic.Factor <- pca_result$x[, 1]
+
+# View the updated data with the new component
+head(mydata)
+
+# View the entire dataset
+View(mydata)
+
+-----------------------------------------------------------------------------------------------------------------
+# Proceed with svr analysis on Anthropegenic factor
+----------------------------------------------------------------------------------------------------------------- 
+# STEP 1 
+# Prepare the dataset (use only the Anthropogenic Factor and Temperature)
+  data_svr <- mydata[, c("Anthropogenic.Factor", "Temperature")]
+
+# Split the data into training (80%) and testing (20%) sets
+set.seed(123)  # For reproducibility
+trainIndex <- createDataPartition(data_svr$Temperature, p = 0.8, list = FALSE)
+trainData <- data_svr[trainIndex, ]
+testData <- data_svr[-trainIndex, ]
+
+# Check the first few rows of the training data
+head(trainData)
+--------------------------------------------------------------------------------------------------------------
+# STEP 2
+# Train the SVR model
+svr_model <- svm(Temperature ~ Anthropogenic.Factor, data = trainData, 
+                 kernel = "linear", epsilon = 0.5, cost = 1)
+
+# Check the model details
+summary(svr_model)
+--------------------------------------------------------------------------------------------------------------
+# STEP 3
+# Make predictions on the test data
+svr_predictions <- predict(svr_model, newdata = testData)
+
+# Compare actual vs predicted values
+comparison <- data.frame(Actual = testData$Temperature, Predicted = svr_predictions)
+head(comparison)
+
+---------------------------------------------------------------------------------------------------------------
+# STEP 4
+# RMSE (Root Mean Square Error)
+rmse_val <- sqrt(mean((svr_predictions - testData$Temperature)^2))
+
+# MAE (Mean Absolute Error)
+mae_val <- mean(abs(svr_predictions - testData$Temperature))
+
+# R-squared
+r_squared <- cor(svr_predictions, testData$Temperature)^2
+
+# MAPE (Mean Absolute Percentage Error)
+mape_val <- mean(abs((svr_predictions - testData$Temperature) / testData$Temperature)) * 100
+
+# Display the results
+cat("RMSE: ", rmse_val, "\n")
+cat("MAE: ", mae_val, "\n")
+cat("R-squared: ", r_squared, "\n")
+cat("MAPE: ", mape_val, "%\n")
+-------------------------------------------------------------------------------------------------------------
+#STEP 5
+# Plot Actual vs Predicted Temperature
+plot(testData$Temperature, svr_predictions, main = "SVR: Actual vs Predicted Temperature",
+     xlab = "Actual Temperature", ylab = "Predicted Temperature", pch = 19, col = "blue")
+abline(0, 1, col = "red", lwd = 2)  # Add a reference line (y = x)
+
+--------------------------------------------------------------------------------------------------------------
+
+# THE ABOVE CODING PROVIDE ONLY FEW POINT ON GRAPH #
+# BELOE IS AN ATTEMPT TO CODE SO THAT ALL POINTS ARE PLOT 
+
+# Predict on both train and test data
+train_preds <- predict(svr_model, newdata = trainData)
+test_preds <- predict(svr_model, newdata = testData)
+
+# Combine into one data frame for both train and test
+combined_data <- rbind(
+  data.frame(Set = "Train", Actual = trainData$Temperature, Predicted = train_preds),
+  data.frame(Set = "Test", Actual = testData$Temperature, Predicted = test_preds)
+)
+
+#POTENTIAL GRAPH
+#GRAPH 1
+
+# Plot Actual vs Predicted for both Train and Test
+ggplot(combined_data, aes(x = Actual, y = Predicted, color = Set)) +
+  geom_point(size = 3) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "black") +
+  labs(title = "SVR: Actual vs Predicted (Train vs Test)",
+       x = "Actual Temperature",
+       y = "Predicted Temperature") +
+  theme_minimal()
+
+#GRAPH 2
+#Scatter Plot of Actual Temperature vs. Predicted Temperature (with Anthropogenic Factor)
+#Purpose: To visualize how the Anthropogenic Factor influences both actual and predicted temperatures.
+
+ggplot(data.frame(Actual = testData$Temperature, Predicted = svr_predictions, Anthropogenic.Factor = testData$Anthropogenic.Factor),
+       aes(x = Anthropogenic.Factor, y = Actual, color = Predicted)) +
+  geom_point() +
+  geom_smooth(method = "lm", color = "red") +
+  labs(title = "SVR: Actual vs Predicted Temperature (Colored by Anthropogenic Factor)",
+       x = "Anthropogenic Factor", y = "Temperature") +
+  theme_minimal()
+
+#GRAPH 3
+# Line Plot of Predicted Temperature Over the Range of Anthropogenic Factor
+# Purpose: This can visualize how the predicted temperature varies with different values of the Anthropogenic Factor.
+
+
+ggplot(data.frame(Anthropogenic.Factor = testData$Anthropogenic.Factor, Predicted = svr_predictions),
+       aes(x = Anthropogenic.Factor, y = Predicted)) +
+  geom_line(color = "blue") +
+  labs(title = "SVR: Predicted Temperature over Anthropogenic Factor",
+       x = "Anthropogenic Factor", y = "Predicted Temperature") +
+  theme_minimal()
+
+
+#GRAPH 4
+# Correlation Plot
+# Purpose: To visualize the strength and direction of the relationship between the Anthropogenic Factor and Temperature. A correlation plot will show the degree of correlation, providing insight into how closely these two variables are related.
+
+install.packages("corrplot")
+# Load the package
+library(corrplot)
+
+# Calculate correlation matrix
+correlation_matrix <- cor(data.frame(Anthropogenic.Factor = testData$Anthropogenic.Factor, Temperature = testData$Temperature))
+
+# Plot the correlation matrix
+corrplot(correlation_matrix, method = "circle", type = "lower", tl.cex = 0.8)
+
